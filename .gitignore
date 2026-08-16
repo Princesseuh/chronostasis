@@ -4,3 +4,8 @@ Cargo.lock.bak
 
 /plans
 .claude
+
+# Release workflow staging dirs; sampo's release PR commits whatever is untracked
+/dist
+/artifacts
+/winstage
