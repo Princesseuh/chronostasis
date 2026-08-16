@@ -1,0 +1,13 @@
+[package]
+name = "chronostasis-website"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+# Standalone workspace: keeps this site decoupled from the parent Rust workspace
+# at the repo root so `maudit`/`maud` don't get pulled into the suite's build.
+[workspace]
+
+[dependencies]
+maudit = "0.12.0"
+maud = "0.27.0"

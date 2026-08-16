@@ -1,0 +1,13 @@
+[package]
+name = "ff13-laa-patch"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Large Address Aware (LAA) PE patch for Final Fantasy XIII."
+readme = "README.md"
+keywords = ["final-fantasy", "ffxiii", "laa", "patch"]
+categories = ["games"]
+
+[dependencies]
+thiserror.workspace = true

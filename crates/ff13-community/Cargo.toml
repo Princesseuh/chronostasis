@@ -1,0 +1,18 @@
+[package]
+name = "ff13-community"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Community-mod formats and tooling for FFXIII: .ncmp modpack install, HD-pack .bin cipher, mod edit-scripts, skeleton merge, mesh subdivision, and the HD Fonts/GUI baker."
+readme = "README.md"
+keywords = ["final-fantasy", "ffxiii", "modding", "hd-textures"]
+categories = ["games"]
+
+[dependencies]
+ff13-formats.workspace = true
+anyhow.workspace = true
+byteorder.workspace = true
+rayon.workspace = true
+# Importing community `.ncmp` modpacks (ZIP archives) into the local library.
+zip = { version = "2", default-features = false, features = ["deflate"] }

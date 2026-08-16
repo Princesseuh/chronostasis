@@ -1,0 +1,22 @@
+[package]
+name = "ff13"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Game discovery, archive unpack/repack, LAA patching, proxy setup, and modpack install for Final Fantasy XIII (Steam and Proton)."
+readme = "README.md"
+keywords = ["final-fantasy", "ffxiii", "modding", "proton"]
+categories = ["games"]
+
+[features]
+# Embed the prebuilt proxy d3d9.dll so `proxy::resolve_proxy_dll` can hand it out with no
+# loose file. The release CI builds the DLL first and sets CHRONOSTASIS_BUNDLED_DLL to its path.
+bundled-dll = []
+
+[dependencies]
+ff13-community.workspace = true
+ff13-formats.workspace = true
+ff13-laa-patch.workspace = true
+anyhow.workspace = true
+rayon.workspace = true

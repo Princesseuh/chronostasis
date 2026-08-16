@@ -1,0 +1,4 @@
+# ff13-hooks is a 32-bit Windows cdylib built with the mingw-w64 i686 toolchain.
+# The linker is resolved via PATH; on Windows/MSYS2 add C:/msys64/mingw32/bin to PATH.
+[target.i686-pc-windows-gnu]
+linker = "i686-w64-mingw32-gcc"
