@@ -15,15 +15,15 @@ quality-of-life improvements, bug fixes, mod management, and modding tools into 
 
 ## Players
 
-Visit the [Releases](https://github.com/Princesseuh/chronostasis/releases) page and download the latest version for your system. Chronostasis is available on Windows, macOS and Linux, as both an easy-to-use GUI and a CLI. If you're unsure, download the GUI version.
+Chronostasis is available on Windows, macOS and Linux, as both an easy-to-use GUI and a CLI. If you're unsure, download the GUI version.
 
 ### GUI
 
-Follow the instructions to install both fixes and mods.
+Download for [Windows](https://chronostasis.erika.florist/download/gui-windows), [macOS](https://chronostasis.erika.florist/download/gui-macos) or [Linux](https://chronostasis.erika.florist/download/gui-linux), then follow the instructions to install both fixes and mods.
 
 ### CLI
 
-Run `chronostasis install` and follow the prompts.
+Download for [Windows](https://chronostasis.erika.florist/download/cli-windows), [macOS](https://chronostasis.erika.florist/download/cli-macos) or [Linux](https://chronostasis.erika.florist/download/cli-linux), then run `chronostasis install` and follow the prompts.
 
 ## Developers & Modders
 
