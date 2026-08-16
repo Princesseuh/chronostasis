@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+/* Scan the Rust route/layout files for class names. */
+@source "./**/*.rs";
+
+@theme {
+  --color-paper: #eef1f4;
+  --color-paper-2: #f8fafb;
+  --color-ink: #222b37;
+  --color-body: #57626f;
+  --color-faint: #97a1ae;
+  --color-rule: #d6dde3;
+  --color-rule-2: #c4cdd6;
+  --color-cyan: #0e94b6;
+  --color-cyan-bright: #19b6dd;
+
+  /* Geometric Humanist stack (modernfontstacks.com) so the type doesn't read
+     as default Tailwind Inter: Avenir/Corbel on macOS/Windows, URW Gothic on Linux. */
+  --font-sans: Avenir, Montserrat, Corbel, "URW Gothic", source-sans-pro, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Pale, faintly-lit Cocoon-menu backdrop. */
+body {
+  background:
+    radial-gradient(120% 75% at 50% -8%, #ffffff 0%, rgba(255, 255, 255, 0) 55%),
+    linear-gradient(180deg, #f4f7f9 0%, #e6ecf0 100%);
+  background-attachment: fixed;
+}
+
+::selection {
+  background: rgba(25, 182, 221, 0.22);
+}
+
+/* Open list: hairline rows, no frame, no numbers. */
+.ffmenu {
+  width: 100%;
+  max-width: 22rem;
+}
+
+.ffmenu__item {
+  display: flex;
+  align-items: center;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--color-rule);
+  color: var(--color-ink);
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.12s ease;
+}
+
+.ffmenu__item:last-child {
+  border-bottom: none;
+}
+
+.ffmenu__item:hover,
+.ffmenu__item:focus-visible {
+  outline: none;
+  color: var(--color-cyan);
+}

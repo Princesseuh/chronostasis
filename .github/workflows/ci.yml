@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      # Default workspace members only; ff13-hooks (Windows-only DLL) and
+      # chronostasis-gui (heavy wgpu build) have their own jobs below.
+      - name: Clippy
+        run: cargo clippy --locked --all-targets -- -D warnings
+
+      - name: Test
+        run: cargo test --locked
+
+  gui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install GUI build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: gui
+
+      - name: Clippy
+        run: cargo clippy --locked -p chronostasis-gui --all-targets -- -D warnings
+
+      # Tests that need game data skip themselves when FF13_GAME_DIR is unset.
+      - name: Test
+        run: cargo test --locked -p chronostasis-gui
+
+  dll:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install 32-bit MinGW toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-mingw-w64-i686
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+          targets: i686-pc-windows-gnu
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: i686-pc-windows-gnu
+
+      - name: Clippy d3d9.dll proxy
+        env:
+          CARGO_TARGET_I686_PC_WINDOWS_GNU_LINKER: i686-w64-mingw32-gcc
+        run: cargo clippy --locked -p ff13-hooks --target i686-pc-windows-gnu --all-targets -- -D warnings
+
+      # Release profile (lto, codegen-units=1) so linker issues surface here, not mid-release.
+      - name: Build d3d9.dll proxy
+        env:
+          CARGO_TARGET_I686_PC_WINDOWS_GNU_LINKER: i686-w64-mingw32-gcc
+        run: cargo build --locked -p ff13-hooks --target i686-pc-windows-gnu --release
+
+      # Release binaries embed the DLL; make sure the feature-gated path compiles.
+      - name: Check bundled-dll feature
+        env:
+          CHRONOSTASIS_BUNDLED_DLL: ${{ github.workspace }}/target/i686-pc-windows-gnu/release/d3d9.dll
+        run: cargo check --locked -p chronostasis-cli --features bundled-dll

@@ -1,0 +1,20 @@
+# Sampo: changesets, versioning, changelogs, publishing.
+# https://github.com/bruits/sampo
+version = 1
+
+[github]
+repository = "Princesseuh/chronostasis"
+
+[changelog]
+show_commit_hash = true
+show_acknowledgments = true
+
+[packages]
+# Each crate versions and releases independently; sampo cascades bumps through
+# cargo dependencies (e.g. bumping ff13 also bumps chronostasis-cli and updates its
+# requirement). The one coupling that isn't a cargo dependency is the d3d9.dll
+# proxy: both the CLI and the GUI ship/embed it, so the three are kept in lockstep;
+# changing the dll cuts fresh chronostasis-cli + chronostasis-gui releases that bundle the
+# new dll. (ff13-hooks is `publish = false` in its Cargo.toml, so it is version-managed but
+# never sent to crates.io.)
+fixed = [["cargo/ff13-hooks", "cargo/chronostasis-cli", "cargo/chronostasis-gui"]]

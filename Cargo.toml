@@ -1,0 +1,52 @@
+[workspace]
+resolver = "3"
+members = [
+    # focused low-level libraries
+    "crates/ff13-formats",
+    "crates/ff13-laa-patch",
+    # the single operations library every UI builds on
+    "crates/ff13",
+    # user interfaces (thin shells over `ff13`)
+    "crates/chronostasis-cli",
+    "crates/chronostasis-gui",
+    # build artifact: the in-process d3d9 proxy DLL
+    "crates/ff13-hooks",
+    # community-mod formats + tooling (HD texture/model packs), kept out of core
+    "crates/ff13-community",
+]
+# ff13-hooks is a 32-bit Windows DLL; it is excluded from the host build and is
+# built explicitly with `--target i686-pc-windows-gnu`.
+default-members = [
+    "crates/ff13-formats",
+    "crates/ff13-laa-patch",
+    "crates/ff13",
+    "crates/chronostasis-cli",
+    "crates/ff13-community",
+]
+
+[workspace.package]
+# Each crate carries its own version (see each crate's Cargo.toml); sampo bumps
+# them independently and cascades through dependencies.
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/Princesseuh/chronostasis"
+
+[workspace.dependencies]
+ff13-formats = { path = "crates/ff13-formats", version = "0.1.0" }
+ff13-laa-patch = { path = "crates/ff13-laa-patch", version = "0.1.0" }
+ff13-community = { path = "crates/ff13-community", version = "0.1.0" }
+ff13 = { path = "crates/ff13", version = "0.1.0" }
+thiserror = "2"
+anyhow = "1"
+flate2 = "1"
+byteorder = "1"
+rayon = "1"
+encoding_rs = "0.8"
+serde_json = { version = "1", features = ["preserve_order"] }
+bytemuck = { version = "1", features = ["derive"] }
+image_dds = { version = "0.7", default-features = false, features = ["ddsfile", "image"] }
+ddsfile = "0.5"
+
+[profile.release]
+lto = true
+codegen-units = 1

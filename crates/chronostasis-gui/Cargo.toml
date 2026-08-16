@@ -1,0 +1,57 @@
+[package]
+name = "chronostasis-gui"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Desktop GUI (egui/eframe) for the FFXIII modding suite: a Player tab (fixes, .ini, mod install) and a Modder tab (format tools, texture/audio/model viewers)."
+readme = "README.md"
+keywords = ["final-fantasy", "ffxiii", "modding", "gui"]
+categories = ["games"]
+
+[[bin]]
+name = "chronostasis-gui"
+path = "src/main.rs"
+
+[features]
+# Embed the prebuilt proxy d3d9.dll (forwards to ff13) so the deployed GUI finds it with no
+# loose file. The release CI builds the DLL first and sets CHRONOSTASIS_BUNDLED_DLL.
+bundled-dll = ["ff13/bundled-dll"]
+
+[dependencies]
+ff13.workspace = true
+anyhow.workspace = true
+eframe = { version = "0.29", default-features = false, features = [
+    "wgpu",
+    "default_fonts",
+    "wayland",
+    "x11",
+] }
+egui = "0.29"
+rfd = "0.15"
+# Texture preview: decode the extracted DDS (DXT1/3/5 + uncompressed ARGB) plus the
+# common loose image formats. default-features off drops the ISPC encoder
+# (intel_tex_2, needs libstdc++) and decoders we don't use; we only decode.
+image = { version = "0.25", default-features = false, features = [
+    "png",
+    "jpeg",
+    "gif",
+    "bmp",
+    "tga",
+    "webp",
+] }
+image_dds.workspace = true
+ddsfile.workspace = true
+# Audio player: decode + play the ogg/wav we pull out of an SCD. symphonia-all adds
+# the MS-ADPCM codec (FFXIII SFX/voice are ADPCM WAV, which the default decoders can't read).
+rodio = { version = "0.20", features = ["symphonia-all"] }
+# Parallel thumbnail decoding for the Explorer folder grid.
+rayon.workspace = true
+# Fuzzy name matching for the Explorer search (tree + grid).
+fuzzy-matcher = "0.3"
+# 3D model viewer: math + POD casting for wgpu buffers (wgpu/egui_wgpu come via eframe).
+glam = "0.29"
+bytemuck.workspace = true
+# Temporarily silence stderr (fd 2) while opening an audio device, to swallow the
+# ALSA/JACK probe spam cpal prints from C libraries during enumeration.
+libc = "0.2"
