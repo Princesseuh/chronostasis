@@ -5,23 +5,26 @@ use maudit::{AssetsOptions, BuildOptions, BuildOutput, content_sources, coronate
 
 mod routes {
     mod cli;
+    mod download;
     mod getting_started;
     mod index;
     mod model_swap;
     mod troubleshooting;
     pub use cli::CliReference;
+    pub use download::DownloadTarget;
     pub use getting_started::GettingStarted;
     pub use index::Index;
     pub use model_swap::ModelSwap;
     pub use troubleshooting::Troubleshooting;
 }
 
-use routes::{CliReference, GettingStarted, Index, ModelSwap, Troubleshooting};
+use routes::{CliReference, DownloadTarget, GettingStarted, Index, ModelSwap, Troubleshooting};
 
 fn main() -> Result<BuildOutput, Box<dyn std::error::Error>> {
     coronate(
         routes![
             Index,
+            DownloadTarget,
             GettingStarted,
             CliReference,
             ModelSwap,

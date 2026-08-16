@@ -8,6 +8,9 @@ on:
     paths:
       - "website/**"
       - ".github/workflows/deploy-website.yml"
+      # The download links embed these crates' versions.
+      - "crates/chronostasis-cli/Cargo.toml"
+      - "crates/chronostasis-gui/Cargo.toml"
 
 permissions:
   contents: read
