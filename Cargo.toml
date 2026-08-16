@@ -32,10 +32,10 @@ license = "MIT"
 repository = "https://github.com/Princesseuh/chronostasis"
 
 [workspace.dependencies]
-ff13-formats = { path = "crates/ff13-formats", version = "0.1.0" }
-ff13-laa-patch = { path = "crates/ff13-laa-patch", version = "0.1.0" }
-ff13-community = { path = "crates/ff13-community", version = "0.1.0" }
-ff13 = { path = "crates/ff13", version = "0.1.0" }
+ff13-formats = { path = "crates/ff13-formats", version = "0.2.0" }
+ff13-laa-patch = { path = "crates/ff13-laa-patch", version = "0.2.0" }
+ff13-community = { path = "crates/ff13-community", version = "0.2.0" }
+ff13 = { path = "crates/ff13", version = "0.2.0" }
 thiserror = "2"
 anyhow = "1"
 flate2 = "1"
