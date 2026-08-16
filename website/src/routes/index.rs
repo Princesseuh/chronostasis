@@ -1,26 +1,30 @@
 use crate::components::{feature_heading, github_icon, page_title, section_heading, site_nav};
 use crate::layout::layout;
 use maud::{Markup, html};
-use maudit::assets::StyleOptions;
+use maudit::assets::{ImageFormat, ImageOptions, RenderWithAlt, StyleOptions};
 use maudit::route::prelude::*;
 
 const REPO: &str = "https://github.com/Princesseuh/chronostasis";
 
 // `flip` moves the media to the left on desktop, for an alternating zig-zag.
-fn highlight(title: &str, body: Markup, flip: bool) -> Markup {
+fn highlight(title: &str, body: Markup, media: Markup, flip: bool) -> Markup {
     let text_class = if flip { "sm:order-2" } else { "" };
-    let media_class = if flip {
-        "grid aspect-video place-items-center rounded-md border border-rule bg-paper-2/60 text-sm text-faint sm:order-1"
-    } else {
-        "grid aspect-video place-items-center rounded-md border border-rule bg-paper-2/60 text-sm text-faint"
-    };
+    let media_class = if flip { "sm:order-1" } else { "" };
     html! {
         div class="mt-12 grid gap-x-10 gap-y-5 sm:grid-cols-2 sm:items-center" {
             div class=(text_class) {
                 (feature_heading(title))
                 div class="mt-3 space-y-3 leading-relaxed text-body" { (body) }
             }
-            div class=(media_class) { "Footage soon" }
+            div class=(media_class) { (media) }
+        }
+    }
+}
+
+fn media_placeholder() -> Markup {
+    html! {
+        div class="grid aspect-video place-items-center rounded-md border border-rule bg-paper-2/60 text-sm text-faint" {
+            "Footage soon"
         }
     }
 }
@@ -33,6 +37,22 @@ impl Route for Index {
         ctx.assets
             .include_style_with_options("src/prin.css", StyleOptions { tailwind: true })?;
 
+        let play_card = ctx.assets.add_image_with_options(
+            "src/images/play-card.png",
+            ImageOptions {
+                format: Some(ImageFormat::WebP),
+                ..Default::default()
+            },
+        )?;
+
+        let model_viewer = ctx.assets.add_image_with_options(
+            "src/images/model-viewer.png",
+            ImageOptions {
+                format: Some(ImageFormat::WebP),
+                ..Default::default()
+            },
+        )?;
+
         let highlights = [
             (
                 "Open source, runs anywhere",
@@ -42,6 +62,11 @@ impl Route for Index {
                     }
                     p {
                         "It runs natively on Windows, macOS and Linux, with full support for Steam installs under Proton."
+                    }
+                },
+                html! {
+                    figure class="shot overflow-hidden rounded-md border border-rule" {
+                        (play_card.render("A Steam copy of Final Fantasy XIII on Linux, set up and ready to play"))
                     }
                 },
             ),
@@ -55,15 +80,21 @@ impl Route for Index {
                         "Chronostasis fixes both and unlocks proper high resolution and framerate support across the trilogy."
                     }
                 },
+                media_placeholder(),
             ),
             (
-                "Bring your own mods",
+                "Bring your mods",
                 html! {
                     p {
-                        "Chronostasis doubles as a mod manager, with automatic backups whenever you install or remove a mod."
+                        "Chronostasis opens the game's archives, with previews for textures, audio and text, and a 3D viewer that draws models with the game's own shaders."
                     }
                     p {
-                        "It reads existing Nova Chrysalia modpacks as-is, so the community's whole catalog just works."
+                        "Convert any of it to editable formats and back to build your own mod, or install the community's as-is."
+                    }
+                },
+                html! {
+                    figure class="shot overflow-hidden rounded-md border border-rule" {
+                        (model_viewer.render("A Final Fantasy XIII enemy model in the built-in 3D viewer"))
                     }
                 },
             ),
@@ -101,8 +132,8 @@ impl Route for Index {
 
                 section class="mt-20" {
                     (section_heading("Highlights"))
-                    @for (i, (title, body)) in highlights.into_iter().enumerate() {
-                        (highlight(title, body, i % 2 == 1))
+                    @for (i, (title, body, media)) in highlights.into_iter().enumerate() {
+                        (highlight(title, body, media, i % 2 == 1))
                     }
                 }
 

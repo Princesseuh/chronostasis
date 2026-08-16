@@ -89,7 +89,7 @@ impl Route for CliReference {
                 html! {
                     (entry("chronostasis unpack <game> --all", html! {
                         p {
-                            "Unpacks the whole game (main, script and zone archives) into loose files, which is what mods install into. It writes tens of GB and takes a while. "
+                            "Unpacks the whole game (main, script and zone archives) into loose files, which is what mods install into. It takes a while. "
                             (inline_code("--revert"))
                             " deletes the loose files again and returns the game to packed mode, leaving your mods folder alone."
                         }
