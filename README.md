@@ -3,6 +3,12 @@
 Chronostasis is a modding suite for the Final Fantasy XIII trilogy (XIII, XIII-2 and Lightning Returns). It aims to be a one-stop shop for players and modders, bundling
 quality-of-life improvements, bug fixes, mod management, and modding tools into one cross-platform, fully open source project.
 
+<div align="center">
+  <img width="45%" alt="image" src="https://github.com/user-attachments/assets/6e643c6d-5332-484f-b68b-484f5ae3cbdf" />
+  <img width="45%" height="978" alt="image" src="https://github.com/user-attachments/assets/3b65fb50-7856-4f37-959f-85ef203a98e3" />
+</div>
+
+
 ## Getting Started
 
 [Visit the Chronostasis website for more detailed guides and instructions](https://chronostasis.erika.florist), or read below for quick start information.
