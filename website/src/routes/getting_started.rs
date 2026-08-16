@@ -1,3 +1,4 @@
+use super::download::{download_buttons, platform_detect_script};
 use crate::components::{feature_heading, inline_code, section_heading, site_nav};
 use crate::layout::layout;
 use maud::{Markup, html};
@@ -5,12 +6,6 @@ use maudit::assets::StyleOptions;
 use maudit::route::prelude::*;
 
 const RELEASES: &str = "https://github.com/Princesseuh/chronostasis/releases";
-
-fn sub_heading(text: &str) -> Markup {
-    html! {
-        h4 class="text-base font-medium leading-none tracking-tight text-ink" { (text) }
-    }
-}
 
 fn page_link(href: &str, text: &str) -> Markup {
     html! {
@@ -29,59 +24,38 @@ impl Route for GettingStarted {
         // Drives both the content and the table of contents.
         let sections: [(&str, &str, Markup); 2] = [
             (
-                "players",
-                "Players",
+                "gui",
+                "GUI",
                 html! {
                     p {
-                        "Grab the latest release for your platform from "
-                        (page_link(RELEASES, "GitHub Releases"))
-                        ". Each release ships the desktop app and the "
-                        (inline_code("chronostasis"))
-                        " command-line tool; if you're not sure which you want, take the app."
+                        "Pick your game and follow the installer. It sets up the fixes and can prepare the game for mods."
                     }
-                    div class="mt-8 space-y-3" {
-                        (sub_heading("GUI"))
-                        p {
-                            "Pick your game and follow the installer. It sets up the fixes and can prepare the game for mods, a one-time unpack that writes tens of GB."
-                        }
-                        p {
-                            "Everyday use lives in the Player tab: fixes, proxy settings and mod management."
-                        }
+                    p {
+                        "Everyday use lives in the Player tab: fixes, proxy settings and mod management."
                     }
-                    div class="mt-8 space-y-3" {
-                        (sub_heading("CLI"))
-                        p {
-                            (inline_code("chronostasis install"))
-                            " walks through the whole setup: it finds the game, installs the proxy DLL that carries the runtime fixes, offers the 4GB patch, and asks whether to unpack the game for mods (tens of GB, done once)."
-                        }
-                        p {
-                            "Under Proton, the installer prints a launch-options line at the end. Paste it into the game's properties in Steam and you're done."
-                        }
-                        p {
-                            (inline_code("chronostasis mod install <pack>"))
-                            " handles regular modpacks, existing Nova Chrysalia packs included, and "
-                            (inline_code("chronostasis mod hd-install <folder>"))
-                            " takes care of the community HD packs. The full command list lives in the "
-                            (page_link("/cli", "CLI reference"))
-                            "."
-                        }
-                    }
+                    (download_buttons("gui", "the app"))
                 },
             ),
             (
-                "modders",
-                "Modders",
+                "cli",
+                "CLI",
                 html! {
                     p {
-                        "The app's Modder tab has a file browser with texture, audio and text previews, and a 3D model viewer that renders models with the game's own shaders and animations."
+                        (inline_code("chronostasis install"))
+                        " walks through the whole setup: it finds the game, installs the proxy DLL that carries the runtime fixes, offers the 4GB patch, and asks whether to unpack the game for mods."
                     }
                     p {
-                        "On the command line, the "
-                        (page_link("/cli#format-tools", "format tools"))
-                        " convert the game's formats to editable ones and back: textures to DDS, text and databases to plain files, plus audio and movies. For swapping character models, see "
-                        (page_link("/model-swap", "model swap"))
+                        "Under Proton, the installer prints a launch-options line at the end. Paste it into the game's properties in Steam and you're done."
+                    }
+                    p {
+                        (inline_code("chronostasis mod install <pack>"))
+                        " handles regular modpacks, existing Nova Chrysalia packs included, and "
+                        (inline_code("chronostasis mod hd-install <folder>"))
+                        " takes care of the community HD packs. The full command list lives in the "
+                        (page_link("/cli", "CLI reference"))
                         "."
                     }
+                    (download_buttons("cli", "the CLI"))
                 },
             ),
         ];
@@ -92,8 +66,22 @@ impl Route for GettingStarted {
                 div class="grid items-start gap-x-12 gap-y-10 sm:grid-cols-[minmax(0,1fr)_16rem]" {
                     div {
                         (section_heading("Getting started"))
-                        p class="mt-7 max-w-xl leading-relaxed text-body" {
-                            "Chronostasis runs on Windows, macOS and Linux. Steam copies running under Proton are fully supported."
+                        div class="mt-7 max-w-xl space-y-4 leading-relaxed text-body" {
+                            p {
+                                "Chronostasis runs on Windows, macOS and Linux. Steam copies running under Proton are fully supported."
+                            }
+                            p {
+                                "It ships as a desktop app and as the "
+                                (inline_code("chronostasis"))
+                                " command-line tool; if you're not sure which you want, take the app. Every release is also on "
+                                (page_link(RELEASES, "GitHub"))
+                                "."
+                            }
+                            p {
+                                "The modding tools come with both: the Modder tab in the app, and the "
+                                (page_link("/cli#format-tools", "format tools"))
+                                " on the command line."
+                            }
                         }
 
                         @for (id, title, body) in &sections {
@@ -114,6 +102,8 @@ impl Route for GettingStarted {
                         }
                     }
                 }
+
+                (platform_detect_script())
             },
         ))
     }

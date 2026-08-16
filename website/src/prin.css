@@ -35,6 +35,25 @@ body {
   background: rgba(25, 182, 221, 0.22);
 }
 
+.shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Asymmetric padding stands in for the optical nudge this font needs. */
+.dl-btn {
+  @apply inline-flex items-center rounded-md border border-rule-2 px-4 pt-2.5 pb-2 text-sm font-medium leading-none text-ink transition hover:border-faint hover:bg-white/60;
+}
+
+.dl-btn--primary {
+  @apply border-transparent bg-cyan px-5 text-white shadow-sm hover:border-transparent hover:bg-cyan-bright;
+}
+
+.dl-link {
+  @apply text-cyan underline decoration-cyan/40 underline-offset-2 hover:decoration-cyan;
+}
+
 /* Open list: hairline rows, no frame, no numbers. */
 .ffmenu {
   width: 100%;
