@@ -5,6 +5,7 @@ use maudit::assets::{ImageFormat, ImageOptions, RenderWithAlt, StyleOptions};
 use maudit::route::prelude::*;
 
 const REPO: &str = "https://github.com/Princesseuh/chronostasis";
+const FOOTAGE: &str = "https://www.youtube.com/watch?v=ecxIMvkxlSU";
 
 // `flip` moves the media to the left on desktop, for an alternating zig-zag.
 fn highlight(title: &str, body: Markup, media: Markup, flip: bool) -> Markup {
@@ -21,10 +22,16 @@ fn highlight(title: &str, body: Markup, media: Markup, flip: bool) -> Markup {
     }
 }
 
-fn media_placeholder() -> Markup {
+// `preload="none"` keeps the 6 MB off the initial page load.
+fn footage(poster: &Image) -> Markup {
     html! {
-        div class="grid aspect-video place-items-center rounded-md border border-rule bg-paper-2/60 text-sm text-faint" {
-            "Footage soon"
+        figure class="shot overflow-hidden rounded-md border border-rule" {
+            video class="block h-auto w-full" controls preload="none" poster=(poster.url()) {
+                source src="/chronostasis-comparison.mp4" type="video/mp4";
+            }
+        }
+        p class="mt-2 text-sm text-faint" {
+            a class="transition hover:text-ink" href=(FOOTAGE) { "Watch in full quality on YouTube" }
         }
     }
 }
@@ -47,6 +54,14 @@ impl Route for Index {
 
         let model_viewer = ctx.assets.add_image_with_options(
             "src/images/model-viewer.png",
+            ImageOptions {
+                format: Some(ImageFormat::WebP),
+                ..Default::default()
+            },
+        )?;
+
+        let comparison_poster = ctx.assets.add_image_with_options(
+            "src/images/comparison-poster.png",
             ImageOptions {
                 format: Some(ImageFormat::WebP),
                 ..Default::default()
@@ -80,7 +95,7 @@ impl Route for Index {
                         "Chronostasis fixes both and unlocks proper high resolution and framerate support across the trilogy."
                     }
                 },
-                media_placeholder(),
+                footage(&comparison_poster),
             ),
             (
                 "Bring your mods",
