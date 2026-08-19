@@ -1,5 +1,11 @@
 # ff13-hooks
 
+## 0.3.0 — 2026-08-19
+
+### Minor changes
+
+- Bumped due to fixed dependency group policy
+
 ## 0.2.0 — 2026-08-16
 
 ### Minor changes
