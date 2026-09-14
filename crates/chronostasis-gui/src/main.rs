@@ -5,8 +5,6 @@
 mod app;
 mod job;
 mod modder;
-mod modpacks;
-mod player;
 
 use app::App;
 

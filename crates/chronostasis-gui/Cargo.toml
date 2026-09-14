@@ -4,7 +4,7 @@ version = "0.2.0"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "Desktop GUI (egui/eframe) for the FFXIII modding suite: a Player tab (fixes, .ini, mod install) and a Modder tab (format tools, texture/audio/model viewers)."
+description = "Desktop GUI (egui/eframe) for Final Fantasy XIII format and modding tools."
 readme = "README.md"
 keywords = ["final-fantasy", "ffxiii", "modding", "gui"]
 categories = ["games"]
@@ -12,11 +12,6 @@ categories = ["games"]
 [[bin]]
 name = "chronostasis-gui"
 path = "src/main.rs"
-
-[features]
-# Embed the prebuilt proxy d3d9.dll (forwards to ff13) so the deployed GUI finds it with no
-# loose file. The release CI builds the DLL first and sets CHRONOSTASIS_BUNDLED_DLL.
-bundled-dll = ["ff13/bundled-dll"]
 
 [dependencies]
 ff13.workspace = true
@@ -42,8 +37,7 @@ image = { version = "0.25", default-features = false, features = [
 ] }
 image_dds.workspace = true
 ddsfile.workspace = true
-# Audio player: decode + play the ogg/wav we pull out of an SCD. symphonia-all adds
-# the MS-ADPCM codec (FFXIII SFX/voice are ADPCM WAV, which the default decoders can't read).
+# Audio decoding for SCD previews and format inspection.
 rodio = { version = "0.20", features = ["symphonia-all"] }
 # Parallel thumbnail decoding for the Explorer folder grid.
 rayon.workspace = true

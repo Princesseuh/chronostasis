@@ -52,28 +52,6 @@ impl JobRunner {
         });
     }
 
-    /// As [`Self::spawn`], but hands the worker a shared [`Progress`] to drive a live bar.
-    pub fn spawn_tracked<F>(&mut self, ctx: &egui::Context, label: impl Into<String>, f: F)
-    where
-        F: FnOnce(Arc<Progress>) -> anyhow::Result<String> + Send + 'static,
-    {
-        if self.busy() {
-            return;
-        }
-        let label = label.into();
-        let (tx, rx) = channel();
-        let progress = Arc::new(Progress::default());
-        self.running = Some(label.clone());
-        self.rx = Some(rx);
-        self.progress = Some(progress.clone());
-        let ctx = ctx.clone();
-        std::thread::spawn(move || {
-            let result = f(progress).map_err(|e| format!("{e:#}"));
-            let _ = tx.send(Outcome { label, result });
-            ctx.request_repaint();
-        });
-    }
-
     /// `None` until the total is known.
     pub fn progress(&self) -> Option<(usize, usize)> {
         let p = self.progress.as_ref()?;

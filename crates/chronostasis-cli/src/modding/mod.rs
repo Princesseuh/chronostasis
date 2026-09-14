@@ -77,19 +77,6 @@ pub enum ModCommand {
         #[arg(long)]
         out: Option<PathBuf>,
     },
-    /// Convert an HD texture pack's obfuscated `.bin` files into LayeredFS overrides.
-    HdTextures {
-        /// The pack's `textures/` directory (holds the `.bin` files, in subdirs).
-        pack: PathBuf,
-        #[arg(value_enum)]
-        game: GameArg,
-        /// Write overrides elsewhere instead of `<install>/mods`.
-        #[arg(long)]
-        out: Option<PathBuf>,
-        /// Report what would be swapped without writing anything.
-        #[arg(long)]
-        dry_run: bool,
-    },
     /// Build an outfit-swap model from an HD-Models `.txt` swap script into `<install>/mods`.
     HdSwap {
         /// The HD-Models swap script (`.txt`).
@@ -140,9 +127,7 @@ pub enum ModCommand {
         #[arg(long)]
         orig: Option<PathBuf>,
     },
-    /// Install a community mod pack into `<install>/mods`, auto-detecting its layout.
-    ///
-    /// Needs `unpacked_mode` and `texture_mods` set in `chronostasis.ini`.
+    /// Build model assets from a community HD-Models pack into `<install>/mods`.
     HdInstall {
         /// The extracted mod-pack folder.
         path: PathBuf,
@@ -167,12 +152,6 @@ pub fn run(action: ModCommand) -> Result<()> {
         ModCommand::Audio { action } => audio::run(action),
         ModCommand::Movie { action } => movie::run(action),
         ModCommand::Import { mod_dir, game, out } => import::run(&mod_dir, game, out),
-        ModCommand::HdTextures {
-            pack,
-            game,
-            out,
-            dry_run,
-        } => hd::textures(&pack, game, out, dry_run),
         ModCommand::HdSwap {
             script,
             game,

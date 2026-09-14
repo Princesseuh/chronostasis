@@ -20,21 +20,12 @@ impl From<GameArg> for Game {
     }
 }
 
-pub fn game_name_of(game: Game) -> &'static str {
-    match game {
-        Game::XIII => "xiii",
-        Game::XIII2 => "xiii2",
-        Game::LR => "lr",
-    }
-}
-
 pub fn resolve(game: Game) -> Result<GameInstall> {
     let found = discovery::installs(game);
     match found.len() {
         0 => Err(anyhow!(
-            "could not locate {}; add it with `install {} --path <dir>` if it isn't a Steam copy",
+            "could not locate {}; pass a valid game directory or install it through Steam",
             game.display_name(),
-            game_name_of(game),
         )),
         1 => Ok(found.into_iter().next().unwrap()),
         _ => choose_install(found),

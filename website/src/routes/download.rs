@@ -41,19 +41,6 @@ fn cli() -> Product {
     }
 }
 
-// The proxy DLL is built from an unpublished crate, so it rides in the CLI's release.
-fn proxy_dll() -> (String, String) {
-    let Product {
-        crate_name,
-        version,
-        ..
-    } = cli();
-    (
-        "dll".to_string(),
-        format!("{REPO}/releases/download/{crate_name}-v{version}/d3d9-{version}.dll"),
-    )
-}
-
 fn downloads() -> Vec<(String, String)> {
     [gui(), cli()]
         .into_iter()
@@ -70,7 +57,6 @@ fn downloads() -> Vec<(String, String)> {
                 ]
             })
         })
-        .chain([proxy_dll()])
         .collect()
 }
 

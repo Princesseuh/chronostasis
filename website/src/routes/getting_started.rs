@@ -28,10 +28,10 @@ impl Route for GettingStarted {
                 "GUI",
                 html! {
                     p {
-                        "Pick your game and follow the installer. It sets up the fixes and can prepare the game for mods."
+                        "Pick your game and use the format explorer to inspect assets and prepare mods."
                     }
                     p {
-                        "Everyday use lives in the Player tab: fixes, proxy settings and mod management."
+                        "Everyday use lives in the Modder tab: format inspection, previews, and asset authoring."
                     }
                     (download_buttons("gui", "the app"))
                 },
@@ -41,11 +41,11 @@ impl Route for GettingStarted {
                 "CLI",
                 html! {
                     p {
-                        (inline_code("chronostasis install"))
-                        " walks through the whole setup: it finds the game, installs the proxy DLL that carries the runtime fixes, offers the 4GB patch, and asks whether to unpack the game for mods."
+                        (inline_code("chronostasis unpack"))
+                        " prepares game archives as loose files for inspection and mod authoring. The CLI also provides format conversion and data-only mod installation commands."
                     }
                     p {
-                        "Under Proton, the installer prints a launch-options line at the end. Paste it into the game's properties in Steam and you're done."
+                        "Chronostasis does not launch or patch the game; runtime support is handled by NovaFix."
                     }
                     p {
                         (inline_code("chronostasis mod install <pack>"))

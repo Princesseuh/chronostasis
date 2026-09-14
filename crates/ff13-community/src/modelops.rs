@@ -1,20 +1,13 @@
-//! Building HD-pack models and installing HD packs into the LayeredFS `mods/` tree.
+//! Parsing HD-pack model scripts and building data-only model assets.
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
 
 use anyhow::{Result, anyhow};
 
 use crate::modscript::Script;
-use crate::{skel, texbin, tilde};
+use crate::{skel, tilde};
 use ff13_formats::trb::Trb;
-
-/// Bare texture name from a TRB `RESOURCE_ID` (`F03\c001C_02.win32` -> `c001C_02`); the HD pack names `.bin` files by this.
-fn texture_name(raw: &str) -> &str {
-    let base = raw.rsplit(['\\', '/']).next().unwrap_or(raw);
-    base.strip_suffix(".win32").unwrap_or(base)
-}
 
 /// Strip a leading `zoneu\z###\` / `zonec\z###\` (the HD pack's duplicate-archive zone prefix) so the path maps to the real game tree.
 fn strip_zone_prefix(p: &str) -> String {
@@ -203,196 +196,6 @@ pub fn build_outfit_swap(script: &Path, white_data: &Path) -> Result<SwapBuild> 
     })
 }
 
-/// Capped so a multi-GB pack cannot grow resident memory without bound.
-#[derive(Default)]
-struct DecodeCache {
-    entries: HashMap<String, Option<Arc<Vec<u8>>>>,
-    bytes: usize,
-}
-
-const DECODE_CACHE_LIMIT: usize = 256 * 1024 * 1024;
-
-impl DecodeCache {
-    fn insert(&mut self, key: String, dds: &Option<Arc<Vec<u8>>>) {
-        let size = dds.as_ref().map_or(0, |d| d.len());
-        if !self.entries.contains_key(&key) && self.bytes + size <= DECODE_CACHE_LIMIT {
-            self.bytes += size;
-            self.entries.insert(key, dds.clone());
-        }
-    }
-}
-
-/// Bake an HD-texture pack (`.bin` files keyed by texture name) into a LayeredFS
-/// `mods/` tree: scan every game container under `white_data`, re-encode matched
-/// textures (the rest stay byte-exact), layering onto any existing `mods/`
-/// override. With `dry_run`, only report what would be patched.
-pub fn install_hd_textures(
-    white_data: &Path,
-    mods_out: &Path,
-    pack: &Path,
-    dry_run: bool,
-) -> Result<()> {
-    use rayon::prelude::*;
-    use std::sync::atomic::{AtomicUsize, Ordering};
-
-    let mut pack_idx: HashMap<String, PathBuf> = HashMap::new();
-    let mut walk = vec![pack.to_path_buf()];
-    while let Some(d) = walk.pop() {
-        let Ok(rd) = std::fs::read_dir(&d) else {
-            continue;
-        };
-        for ent in rd.flatten() {
-            let p = ent.path();
-            if p.is_dir() {
-                walk.push(p);
-            } else if let Some(name) = p
-                .file_name()
-                .and_then(|f| f.to_str())
-                .and_then(|n| n.strip_suffix(".bin"))
-            {
-                pack_idx.insert(name.to_ascii_lowercase(), p.clone());
-            }
-        }
-    }
-    if pack_idx.is_empty() {
-        anyhow::bail!("no .bin texture files found under {}", pack.display());
-    }
-    println!(
-        "Pack has {} HD textures; scanning game containers …",
-        pack_idx.len()
-    );
-
-    let mut container_paths: Vec<PathBuf> = Vec::new();
-    let mut tstack = vec![white_data.to_path_buf()];
-    while let Some(d) = tstack.pop() {
-        let Ok(rd) = std::fs::read_dir(&d) else {
-            continue;
-        };
-        for ent in rd.flatten() {
-            let p = ent.path();
-            if p.is_dir() {
-                tstack.push(p);
-            } else if p.extension().is_some_and(|e| e == "trb") {
-                container_paths.push(p);
-            }
-        }
-    }
-
-    let containers = AtomicUsize::new(0);
-    let swapped = AtomicUsize::new(0);
-    let missing_format = AtomicUsize::new(0);
-    // The same pack texture feeds many containers; decode its .bin once (None = undecodable).
-    let decoded: Mutex<DecodeCache> = Mutex::new(DecodeCache::default());
-
-    let process = |p: &Path| -> Result<()> {
-        let Some(base) = p
-            .file_name()
-            .and_then(|f| f.to_str())
-            .and_then(|n| n.strip_suffix(".trb"))
-        else {
-            return Ok(());
-        };
-        let imgb_path = p.with_file_name(format!("{base}.imgb"));
-        if !imgb_path.exists() {
-            return Ok(());
-        }
-        // Prefer an existing mods/ override (e.g. model-swap output) as source so HD textures layer on top, not overwrite.
-        let rel = p.strip_prefix(white_data).unwrap_or(p).to_path_buf();
-        let ov_trb = mods_out.join(&rel);
-        let ov_imgb = ov_trb.with_file_name(format!("{base}.imgb"));
-        let layered = ov_trb.is_file() && ov_imgb.is_file();
-        let (src_trb, src_imgb) = if layered {
-            (ov_trb, ov_imgb)
-        } else {
-            (p.to_path_buf(), imgb_path)
-        };
-        let Ok(trb_bytes) = std::fs::read(&src_trb) else {
-            return Ok(());
-        };
-        let Ok(parsed) = Trb::parse(&trb_bytes) else {
-            return Ok(());
-        };
-        let names = parsed.resource_names();
-
-        let mut overrides: HashMap<usize, Vec<u8>> = HashMap::new();
-        for i in parsed.texture_resources() {
-            let Some(raw) = names.get(i) else { continue };
-            let tex_name = texture_name(raw);
-            let key = tex_name.to_ascii_lowercase();
-            let Some(bin_path) = pack_idx.get(&key) else {
-                continue;
-            };
-            let cached = decoded.lock().unwrap().entries.get(&key).cloned();
-            let dds = match cached {
-                Some(d) => d,
-                None => {
-                    let bin = std::fs::read(bin_path)?;
-                    let d = texbin::decode_to_dds(tex_name, &bin)
-                        .ok()
-                        .map(|(_info, dds)| Arc::new(dds));
-                    decoded.lock().unwrap().insert(key, &d);
-                    d
-                }
-            };
-            match dds {
-                Some(d) => {
-                    overrides.insert(i, d.as_ref().clone());
-                }
-                None => {
-                    missing_format.fetch_add(1, Ordering::Relaxed);
-                }
-            }
-        }
-        if overrides.is_empty() {
-            return Ok(());
-        }
-
-        let tag = if layered {
-            "  (layered onto model-swap)"
-        } else {
-            ""
-        };
-        println!(
-            "  {} : {} HD texture(s){tag}",
-            rel.display(),
-            overrides.len()
-        );
-        swapped.fetch_add(overrides.len(), Ordering::Relaxed);
-        containers.fetch_add(1, Ordering::Relaxed);
-        if dry_run {
-            return Ok(());
-        }
-
-        let imgb_bytes = std::fs::read(&src_imgb)?;
-        let (new_trb, new_imgb) = parsed.repack(&imgb_bytes, &overrides)?;
-        let dest_trb = mods_out.join(&rel);
-        let dest_imgb = dest_trb.with_file_name(format!("{base}.imgb"));
-        if let Some(parent) = dest_trb.parent() {
-            std::fs::create_dir_all(parent)?;
-        }
-        std::fs::write(&dest_trb, new_trb)?;
-        std::fs::write(&dest_imgb, new_imgb)?;
-        Ok(())
-    };
-
-    container_paths
-        .par_iter()
-        .try_for_each(|p| process(p.as_path()))?;
-
-    let verb = if dry_run { "would patch" } else { "patched" };
-    println!(
-        "Done: {verb} {} HD texture(s) across {} container(s) into {}",
-        swapped.load(Ordering::Relaxed),
-        containers.load(Ordering::Relaxed),
-        mods_out.display()
-    );
-    let mf = missing_format.load(Ordering::Relaxed);
-    if mf > 0 {
-        println!("  ({mf} .bin had an unrecognized header and were skipped)");
-    }
-    Ok(())
-}
-
 /// Runs the whole pipeline in order: combine, `:~` and edit ops, `:O` skeleton merge, then the
 /// physics bone-rename, writing the resulting `.trb` and `.imgb` to `out`. `bundle` is the pack's
 /// model bundle `.bin`; `orig` is the source-model root, required by combine
@@ -526,12 +329,11 @@ fn run_model_script_bytes(
     Ok(())
 }
 
-/// Install the "FF XIII HD" pack: every `Data/*.txt` model script (Ultimate HD models) into `mods/`, then `textures/` on top.
+/// Install the model portion of an "FF XIII HD" pack from its edit scripts.
 pub fn install_ff13hd(
     white_data: &Path,
     mods_out: &Path,
     data_dir: &Path,
-    tex_dir: &Path,
     dry_run: bool,
 ) -> Result<()> {
     let mut scripts: Vec<PathBuf> = std::fs::read_dir(data_dir)?
@@ -593,8 +395,6 @@ pub fn install_ff13hd(
     }
     println!("Models: {done} script(s) installed, {skipped} skipped");
 
-    println!("Textures: layering HD textures on top …");
-    install_hd_textures(white_data, mods_out, tex_dir, dry_run)?;
     Ok(())
 }
 

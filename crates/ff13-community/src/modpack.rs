@@ -264,7 +264,6 @@ impl Default for InstallOptions {
 pub struct InstallReport {
     pub files: usize,
     pub containers_repacked: usize,
-    pub code_patch: bool,
     /// Files with no valid destination, e.g. a member of a missing container.
     pub skipped: Vec<PathBuf>,
     /// Recorded so uninstall restores exactly the same set.
@@ -281,13 +280,11 @@ enum Mapping {
     Unsupported,
 }
 
-/// Backs originals up to `backup_dir` and copies `Code/*.nccp` into `patch_dir` for the in-process
-/// DLL. Assumes the game is already unpacked to a loose tree.
+/// Installs the data components of a modpack into a loose game tree.
 pub fn install(
     data_dir: &Path,
     modpack: &Modpack,
     backup_dir: &Path,
-    patch_dir: &Path,
     opts: InstallOptions,
 ) -> Result<InstallReport> {
     let mut report = InstallReport::default();
@@ -353,18 +350,6 @@ pub fn install(
         report.containers_repacked += 1;
     }
 
-    let code_dir = modpack.root.join("Code");
-    if code_dir.is_dir() {
-        for entry in std::fs::read_dir(&code_dir)? {
-            let p = entry?.path();
-            if p.extension().and_then(|e| e.to_str()) == Some("nccp") {
-                std::fs::create_dir_all(patch_dir)?;
-                std::fs::copy(&p, patch_dir.join(p.file_name().unwrap()))?;
-                report.code_patch = true;
-            }
-        }
-    }
-
     Ok(report)
 }
 
@@ -373,7 +358,6 @@ pub fn uninstall(
     data_dir: &Path,
     modpack: &Modpack,
     backup_dir: &Path,
-    patch_dir: &Path,
     opts: InstallOptions,
 ) -> Result<()> {
     let mut restored_containers = std::collections::BTreeSet::new();
@@ -407,19 +391,6 @@ pub fn uninstall(
         }
     }
 
-    // Install copied these under their own names.
-    let code_dir = modpack.root.join("Code");
-    if code_dir.is_dir() {
-        for entry in std::fs::read_dir(&code_dir)? {
-            let p = entry?.path();
-            if p.extension().and_then(|e| e.to_str()) == Some("nccp") {
-                let installed = patch_dir.join(p.file_name().unwrap());
-                if installed.is_file() {
-                    std::fs::remove_file(installed)?;
-                }
-            }
-        }
-    }
     Ok(())
 }
 
@@ -708,9 +679,7 @@ mod tests {
 
         let mp = Modpack::read(&pack).unwrap();
         let backup = tmp.join("backup");
-        let patch = tmp.join("patch");
-
-        let report = install(&white, &mp, &backup, &patch, InstallOptions::default()).unwrap();
+        let report = install(&white, &mp, &backup, InstallOptions::default()).unwrap();
         assert_eq!(report.files, 1);
         assert_eq!(report.containers_repacked, 1);
         assert_eq!(std::fs::read(&direct).unwrap(), b"MODDED");
@@ -722,7 +691,7 @@ mod tests {
         assert_eq!(merged.find("tex.txb").unwrap().data, b"NEW");
         assert!(backup.join("chr/pc/c001/pack.bin").is_file());
 
-        uninstall(&white, &mp, &backup, &patch, InstallOptions::default()).unwrap();
+        uninstall(&white, &mp, &backup, InstallOptions::default()).unwrap();
         assert_eq!(std::fs::read(&direct).unwrap(), b"ORIGINAL");
         let restored = ff13_formats::Wpd::read(&container).unwrap();
         assert_eq!(restored.find("tex.txb").unwrap().data, b"OLD");

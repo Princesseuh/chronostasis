@@ -97,17 +97,6 @@ impl Game {
         }
     }
 
-    /// A SteamStub exe needs the LAA patch to keep a pristine `untouched.exe` for the runtime
-    /// self-read redirect, and needs the DLL to run that redirect at all.
-    pub fn is_steamstub_protected(self) -> bool {
-        matches!(self, Game::XIII)
-    }
-
-    /// XIII and XIII-2 are the memory-starved 32-bit titles; LR does not need it.
-    pub fn laa_patch_applies(self) -> bool {
-        matches!(self, Game::XIII | Game::XIII2)
-    }
-
     pub fn from_nova_id(id: &str) -> Option<Game> {
         match id {
             "XIII" => Some(Game::XIII),

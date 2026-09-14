@@ -3,14 +3,11 @@ resolver = "3"
 members = [
     # focused low-level libraries
     "crates/ff13-formats",
-    "crates/ff13-laa-patch",
     # the single operations library every UI builds on
     "crates/ff13",
     # user interfaces (thin shells over `ff13`)
     "crates/chronostasis-cli",
     "crates/chronostasis-gui",
-    # build artifact: the in-process d3d9 proxy DLL
-    "crates/ff13-hooks",
     # community-mod formats + tooling (HD texture/model packs), kept out of core
     "crates/ff13-community",
 ]
@@ -18,7 +15,6 @@ members = [
 # built explicitly with `--target i686-pc-windows-gnu`.
 default-members = [
     "crates/ff13-formats",
-    "crates/ff13-laa-patch",
     "crates/ff13",
     "crates/chronostasis-cli",
     "crates/ff13-community",
@@ -33,7 +29,6 @@ repository = "https://github.com/Princesseuh/chronostasis"
 
 [workspace.dependencies]
 ff13-formats = { path = "crates/ff13-formats", version = "0.2.0" }
-ff13-laa-patch = { path = "crates/ff13-laa-patch", version = "0.2.0" }
 ff13-community = { path = "crates/ff13-community", version = "0.2.0" }
 ff13 = { path = "crates/ff13", version = "0.2.0" }
 thiserror = "2"
