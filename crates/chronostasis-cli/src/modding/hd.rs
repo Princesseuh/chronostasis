@@ -7,13 +7,6 @@ use ff13::{community::modelops, formats::trb::Trb};
 use crate::modding::mods_dir;
 use crate::resolve::{GameArg, resolve};
 
-pub fn textures(pack: &Path, game: GameArg, out: Option<PathBuf>, dry_run: bool) -> Result<()> {
-    let gi = resolve(game.into())?;
-    let white_data = gi.data_dir();
-    let mods_out = mods_dir(&gi, out);
-    modelops::install_hd_textures(&white_data, &mods_out, pack, dry_run)
-}
-
 pub fn swap(script: &Path, game: GameArg, out: Option<PathBuf>, dry_run: bool) -> Result<()> {
     let gi = resolve(game.into())?;
     let white_data = gi.data_dir();
@@ -61,37 +54,12 @@ pub fn install(path: &Path, game: GameArg, dry_run: bool) -> Result<()> {
     let white_data = gi.data_dir();
     let mods_out = mods_dir(&gi, None);
 
-    if path.join("hd_textures").join("hash_database.txt").is_file() {
-        println!("Detected: HD Fonts and GUI (runtime hash-swap pack)");
-        let hd = path.join("hd_textures");
-        let r = ff13::community::hdgui::emit_layeredfs_hashed(
-            &hd,
-            &white_data,
-            &white_data,
-            &mods_out,
-            dry_run,
-        )?;
-        let verb = if dry_run { "would write" } else { "wrote" };
-        println!(
-            "{verb} {} override(s) to {} ({} unmatched, {} missing .dds)",
-            r.written.len(),
-            mods_out.display(),
-            r.unmatched.len(),
-            r.missing_dds.len()
-        );
-    } else if path.join("Data").is_dir() && path.join("textures").is_dir() {
+    if path.join("Data").is_dir() {
         println!("Detected: FF XIII HD (Ultimate models + HD textures pack)");
-        modelops::install_ff13hd(
-            &white_data,
-            &mods_out,
-            &path.join("Data"),
-            &path.join("textures"),
-            dry_run,
-        )?;
+        modelops::install_ff13hd(&white_data, &mods_out, &path.join("Data"), dry_run)?;
     } else {
         anyhow::bail!(
-            "could not identify the mod at {}: expected HD Fonts ('hd_textures/hash_database.txt') \
-             or FF XIII HD ('Data/' + 'textures/')",
+            "could not identify the mod at {}: expected FF XIII HD ('Data/')",
             path.display()
         );
     }

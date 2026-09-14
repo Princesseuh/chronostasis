@@ -182,43 +182,6 @@ fn read_registry_lines(path: &Path) -> Vec<String> {
         .unwrap_or_default()
 }
 
-/// Prefers the newer `dxvk/i386-windows/` layout and falls back to the older 32-bit path, which
-/// is under `lib` rather than `lib64`. The most recently modified match wins.
-pub fn find_proton_dxvk_d3d9() -> Option<PathBuf> {
-    let mut best: Option<(std::time::SystemTime, PathBuf)> = None;
-    for steamapps in library_steamapps() {
-        let common = steamapps.join("common");
-        let Ok(entries) = std::fs::read_dir(&common) else {
-            continue;
-        };
-        for entry in entries.flatten() {
-            let dir = entry.path();
-            if !dir.is_dir() {
-                continue;
-            }
-            let name = entry.file_name();
-            if !name.to_string_lossy().to_lowercase().contains("proton") {
-                continue;
-            }
-            for rel in [
-                "files/lib/wine/dxvk/i386-windows/d3d9.dll",
-                "files/lib/wine/dxvk/d3d9.dll",
-                "dist/lib/wine/dxvk/d3d9.dll",
-            ] {
-                let cand = dir.join(rel);
-                if let Ok(meta) = std::fs::metadata(&cand) {
-                    let mtime = meta.modified().unwrap_or(std::time::UNIX_EPOCH);
-                    if best.as_ref().is_none_or(|(t, _)| mtime > *t) {
-                        best = Some((mtime, cand));
-                    }
-                    break;
-                }
-            }
-        }
-    }
-    best.map(|(_, p)| p)
-}
-
 /// A lenient line scan, not a real VDF parse.
 fn parse_library_paths(vdf: &Path) -> Vec<PathBuf> {
     let Ok(text) = std::fs::read_to_string(vdf) else {

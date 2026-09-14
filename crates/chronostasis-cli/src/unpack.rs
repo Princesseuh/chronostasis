@@ -1,11 +1,11 @@
 use std::path::PathBuf;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use clap::Args;
 
 use ff13::{archive, archive::Variant};
 
-use crate::resolve::{GameArg, game_name_of, resolve};
+use crate::resolve::{GameArg, resolve};
 use crate::util::prompt_yes_no;
 
 /// Unpack White archives into loose files.
@@ -92,16 +92,6 @@ fn revert(game: GameArg, yes: bool) -> Result<()> {
     }
     println!("Removing unpacked files …");
     let removed = archive::revert_unpack(&gi)?;
-    if let Some(cfg) = ff13::proxy::read_config(&gi) {
-        let cfg = ff13::config::SuiteConfig {
-            unpacked_mode: false,
-            ..cfg
-        };
-        ff13::proxy::write_config(&gi, &cfg).context(
-            "could not update chronostasis.ini: unpacked_mode is still on over a \
-             packed game; set it to false with `chronostasis configure`",
-        )?;
-    }
     println!("Done: removed {removed} unpacked files; back to packed mode.");
     Ok(())
 }
@@ -163,15 +153,7 @@ fn unpack_all(args: UnpackArgs) -> Result<()> {
                 movie_out.display()
             );
         }
-        println!("\nNext: enable unpacked mode:");
-        println!(
-            "    chronostasis configure {0}   (set unpacked_mode = true)",
-            game_name_of(args.game.into())
-        );
-        println!(
-            "    or `chronostasis install {0} --mods` for the full guided setup.",
-            game_name_of(args.game.into())
-        );
+        println!("\nThe loose tree is ready for format inspection and mod authoring.");
     }
     Ok(())
 }

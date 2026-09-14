@@ -1,7 +1,6 @@
 # Chronostasis
 
-Chronostasis is a modding suite for the Final Fantasy XIII trilogy (XIII, XIII-2 and Lightning Returns). It aims to be a one-stop shop for players and modders, bundling
-quality-of-life improvements, bug fixes, mod management, and modding tools into one cross-platform, fully open source project.
+Chronostasis is a cross-platform format and modding toolkit for the Final Fantasy XIII trilogy (XIII, XIII-2 and Lightning Returns). It focuses on parsing, inspecting, converting, and authoring game assets; runtime fixes and game launching are handled by dedicated projects such as NovaFix.
 
 <div align="center">
   <img width="45%" alt="image" src="https://github.com/user-attachments/assets/6e643c6d-5332-484f-b68b-484f5ae3cbdf" />
@@ -13,17 +12,9 @@ quality-of-life improvements, bug fixes, mod management, and modding tools into 
 
 [Visit the Chronostasis website for more detailed guides and instructions](https://chronostasis.erika.florist), or read below for quick start information.
 
-## Players
+## Tools
 
-Chronostasis is available on Windows, macOS and Linux, as both an easy-to-use GUI and a CLI. If you're unsure, download the GUI version.
-
-### GUI
-
-Download for [Windows](https://chronostasis.erika.florist/download/gui-windows), [macOS](https://chronostasis.erika.florist/download/gui-macos) or [Linux](https://chronostasis.erika.florist/download/gui-linux), then follow the instructions to install both fixes and mods.
-
-### CLI
-
-Download for [Windows](https://chronostasis.erika.florist/download/cli-windows), [macOS](https://chronostasis.erika.florist/download/cli-macos) or [Linux](https://chronostasis.erika.florist/download/cli-linux), then run `chronostasis install` and follow the prompts.
+Chronostasis is available on Windows, macOS and Linux as a GUI and CLI. It does not launch or patch the game. Use the tools to inspect game files, unpack/repack archives, preview assets, and build mods.
 
 ## Developers & Modders
 
@@ -32,15 +23,13 @@ Download for [Windows](https://chronostasis.erika.florist/download/cli-windows),
 Chronostasis is built as a set of crates you can use in your own tools:
 
 - `ff13-formats` reads and writes the game's file formats.
-- `ff13-laa-patch` applies and reverts the Large Address Aware (LAA) PE patch.
 - `ff13-community` handles various operations related to community formats, such as Nova Modpacks.
-- `ff13-hooks` is the in-process `d3d9.dll` proxy that carries the runtime fixes.
-- `ff13` is the high-level entry point, re-exporting many of the above crates and adding game discovery, archive unpack/repack, proxy setup, and modpack install.
+- `ff13` is the high-level entry point for game-file discovery, archive unpack/repack, and modding operations.
 
 The following two crates are specific to the two interfaces Chronostasis can be used from.
 
 - `chronostasis-cli` is the `chronostasis` command-line tool.
-- `chronostasis-gui` is the desktop app (egui), with the Player and Modder tabs.
+- `chronostasis-gui` is the desktop app (egui) for format inspection and modder tools.
 
 ## Acknowledgements
 

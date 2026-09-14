@@ -8,5 +8,5 @@
 
 ### Patch changes
 
-- Updated dependencies: ff13-community@0.2.0, ff13-formats@0.2.0, ff13-laa-patch@0.2.0
+- Removed runtime DLL, executable patching, and game-launch support; ff13 now contains only format and modding operations.
 

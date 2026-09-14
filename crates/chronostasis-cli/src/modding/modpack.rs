@@ -28,11 +28,11 @@ pub fn install(dir: &Path, no_en: bool, no_jp: bool) -> Result<()> {
         include_en: !no_en,
         include_jp: !no_jp,
     };
-    let report = mods::install(&gi.data_dir(), &mp, &gi.backup_dir(), &gi.patch_dir(), opts)?;
+    let report = mods::install(&gi.data_dir(), &mp, &gi.backup_dir(), opts)?;
     mp.write_install_state(true, report.installed_en, report.installed_jp)?;
     println!(
-        "Installed {}: {} files, {} container(s) repacked, code_patch={}",
-        mp.config.name, report.files, report.containers_repacked, report.code_patch
+        "Installed {}: {} files, {} container(s) repacked",
+        mp.config.name, report.files, report.containers_repacked
     );
     for s in &report.skipped {
         println!("  skipped: {}", s.display());
@@ -48,7 +48,7 @@ pub fn uninstall(dir: &Path) -> Result<()> {
         include_en: mp.config.en_installed.unwrap_or(true),
         include_jp: mp.config.jp_installed.unwrap_or(true),
     };
-    mods::uninstall(&gi.data_dir(), &mp, &gi.backup_dir(), &gi.patch_dir(), opts)?;
+    mods::uninstall(&gi.data_dir(), &mp, &gi.backup_dir(), opts)?;
     mp.write_install_state(false, false, false)?;
     println!("Uninstalled {}", mp.config.name);
     Ok(())

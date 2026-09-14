@@ -5,7 +5,7 @@ name: Release
 # Each crate versions and releases on its own; sampo opens a "Release" PR when
 # changesets are pending and, once merged, publishes the changed crates to
 # crates.io, tags them, and creates a per-crate GitHub release. The chronostasis
-# CLI binaries (and the d3d9.dll it deploys) are attached to the chronostasis-cli
+# CLI binaries are attached to the chronostasis-cli
 # release.
 #
 # The `paths` filter keeps ordinary code commits from triggering the build matrix;
@@ -31,10 +31,6 @@ concurrency:
 
 jobs:
   build-cli:
-    # Needs the proxy DLL first: the single-file Linux/macOS binaries embed it via the
-    # `bundled-dll` feature so `install` needs no loose DLL. (Windows ships the DLL
-    # loose in the zip beside the exe, so it skips embedding; avoids a host path snag.)
-    needs: build-dll
     strategy:
       fail-fast: false
       matrix:
@@ -42,11 +38,11 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             bin: chronostasis
-            bundle: "--features bundled-dll"
+            bundle: ""
           - os: macos-latest
             target: aarch64-apple-darwin
             bin: chronostasis
-            bundle: "--features bundled-dll"
+            bundle: ""
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             bin: chronostasis.exe
@@ -63,16 +59,8 @@ jobs:
         with:
           key: ${{ matrix.target }}
 
-      - name: Download proxy DLL (to embed)
-        uses: actions/download-artifact@v4
-        with:
-          name: dll-i686
-          path: dll
-
       - name: Build chronostasis CLI
         shell: bash
-        env:
-          CHRONOSTASIS_BUNDLED_DLL: ${{ github.workspace }}/dll/d3d9.dll
         run: |
           cargo build --locked --release --target ${{ matrix.target }} -p chronostasis-cli ${{ matrix.bundle }} --bin chronostasis
           mkdir -p out
@@ -85,8 +73,6 @@ jobs:
           if-no-files-found: error
 
   build-gui:
-    # Same DLL-embedding story as build-cli; the GUI's Player tab deploys the proxy too.
-    needs: build-dll
     strategy:
       fail-fast: false
       matrix:
@@ -94,11 +80,11 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             bin: chronostasis-gui
-            bundle: "--features bundled-dll"
+            bundle: ""
           - os: macos-latest
             target: aarch64-apple-darwin
             bin: chronostasis-gui
-            bundle: "--features bundled-dll"
+            bundle: ""
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             bin: chronostasis-gui.exe
@@ -123,16 +109,8 @@ jobs:
         with:
           key: gui-${{ matrix.target }}
 
-      - name: Download proxy DLL (to embed)
-        uses: actions/download-artifact@v4
-        with:
-          name: dll-i686
-          path: dll
-
       - name: Build chronostasis GUI
         shell: bash
-        env:
-          CHRONOSTASIS_BUNDLED_DLL: ${{ github.workspace }}/dll/d3d9.dll
         run: |
           cargo build --locked --release --target ${{ matrix.target }} -p chronostasis-gui ${{ matrix.bundle }} --bin chronostasis-gui
           mkdir -p out
@@ -144,37 +122,8 @@ jobs:
           path: out/${{ matrix.bin }}
           if-no-files-found: error
 
-  build-dll:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install 32-bit MinGW toolchain
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-mingw-w64-i686
-
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: i686-pc-windows-gnu
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          key: i686-pc-windows-gnu
-
-      - name: Build d3d9.dll proxy
-        env:
-          CARGO_TARGET_I686_PC_WINDOWS_GNU_LINKER: i686-w64-mingw32-gcc
-        run: cargo build --locked -p ff13-hooks --release --target i686-pc-windows-gnu
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dll-i686
-          path: target/i686-pc-windows-gnu/release/d3d9.dll
-          if-no-files-found: error
-
   release:
-    needs: [build-cli, build-gui, build-dll]
+    needs: [build-cli, build-gui]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -194,9 +143,8 @@ jobs:
           path: artifacts
 
       # Stage per-crate assets so sampo's `{{crate}}` matcher attaches each set to the
-      # right release: chronostasis-cli-* to the CLI release, chronostasis-gui-* to the GUI
-      # release. Each Windows zip bundles the binary with the d3d9.dll it deploys.
-      - name: Stage release assets (cli + gui + dll)
+      # right release: chronostasis-cli-* to the CLI release and chronostasis-gui-* to the GUI.
+      - name: Stage release assets (cli + gui)
         run: |
           mkdir -p dist winstage
 
@@ -206,8 +154,7 @@ jobs:
           tar -C artifacts/cli-x86_64-unknown-linux-gnu -czf dist/chronostasis-cli-x86_64-unknown-linux-gnu.tar.gz chronostasis
           tar -C artifacts/cli-aarch64-apple-darwin     -czf dist/chronostasis-cli-aarch64-apple-darwin.tar.gz chronostasis
           cp artifacts/cli-x86_64-pc-windows-msvc/chronostasis.exe winstage/
-          cp artifacts/dll-i686/d3d9.dll winstage/
-          (cd winstage && zip -q ../dist/chronostasis-cli-x86_64-pc-windows-msvc.zip chronostasis.exe d3d9.dll)
+          (cd winstage && zip -q ../dist/chronostasis-cli-x86_64-pc-windows-msvc.zip chronostasis.exe)
 
           # --- chronostasis-gui ---
           chmod +x artifacts/gui-x86_64-unknown-linux-gnu/chronostasis-gui \
@@ -215,11 +162,8 @@ jobs:
           tar -C artifacts/gui-x86_64-unknown-linux-gnu -czf dist/chronostasis-gui-x86_64-unknown-linux-gnu.tar.gz chronostasis-gui
           tar -C artifacts/gui-aarch64-apple-darwin     -czf dist/chronostasis-gui-aarch64-apple-darwin.tar.gz chronostasis-gui
           cp artifacts/gui-x86_64-pc-windows-msvc/chronostasis-gui.exe winstage/
-          (cd winstage && zip -q ../dist/chronostasis-gui-x86_64-pc-windows-msvc.zip chronostasis-gui.exe d3d9.dll)
+          (cd winstage && zip -q ../dist/chronostasis-gui-x86_64-pc-windows-msvc.zip chronostasis-gui.exe)
 
-          # The proxy DLL on its own (also embedded in the binaries); attached to both releases.
-          cp artifacts/dll-i686/d3d9.dll dist/chronostasis-cli-d3d9.dll
-          cp artifacts/dll-i686/d3d9.dll dist/chronostasis-gui-d3d9.dll
 
           ls -la dist
 
@@ -236,6 +180,5 @@ jobs:
             dist/{{crate}}-x86_64-unknown-linux-gnu.tar.gz => {{crate}}-{{version}}-linux-x86_64.tar.gz
             dist/{{crate}}-aarch64-apple-darwin.tar.gz => {{crate}}-{{version}}-macos-aarch64.tar.gz
             dist/{{crate}}-x86_64-pc-windows-msvc.zip => {{crate}}-{{version}}-windows-x86_64.zip
-            dist/{{crate}}-d3d9.dll => d3d9-{{version}}.dll
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
